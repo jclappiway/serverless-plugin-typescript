@@ -3,6 +3,8 @@ import * as fs from 'fs-extra'
 import * as _ from 'lodash'
 import * as path from 'path'
 
+const keysTransformer = require('ts-transformer-keys/transformer').default;
+
 export function makeDefaultTypescriptConfig() {
   const defaultTypescriptConfig: ts.CompilerOptions = {
     preserveConstEnums: true,
@@ -73,8 +75,13 @@ export function extractFileNames(cwd: string, provider: string, functions?: { [k
 export async function run(fileNames: string[], options: ts.CompilerOptions): Promise<string[]> {
   options.listEmittedFiles = true
   const program = ts.createProgram(fileNames, options)
+  
+  const transformers = {
+    before: [keysTransformer(program)],
+    after: []
+  };
 
-  const emitResult = program.emit()
+  const emitResult = program.emit(undefined, undefined, undefined, false, transformers)
 
   const allDiagnostics = ts.getPreEmitDiagnostics(program).concat(emitResult.diagnostics)
 
